@@ -4,9 +4,13 @@ using UnityEngine;
 [HelpURL("https://docs.google.com/document/d/1rdTEVSrCcYOjqTJcFCHj46RvnbdJhmQUb3gHMDhVftI/edit?usp=sharing")]
 public class ScalerModule : MonoBehaviour
 {
-    private Vector3 targetScale = new Vector3(2,2,2);
+    [Tooltip("Target scale to reach when scaling up")]
+    [Min(0.01f)]
+    [SerializeField] private Vector3 targetScale = new Vector3(2, 2, 2);
 
-    private float changeSpeed;
+    [Tooltip("Speed of scale change")]
+    [Min(0.01f)]
+    [SerializeField] private float changeSpeed = 1f;
 
     private Vector3 defaultScale;
     private Transform myTransform;
@@ -37,7 +41,7 @@ public class ScalerModule : MonoBehaviour
     {
         Vector3 start = myTransform.lossyScale;
         float t = 0;
-        while(t < 1)
+        while (t < 1)
         {
             t += Time.deltaTime * changeSpeed;
             myTransform.localScale = Vector3.Lerp(start, target, t);
