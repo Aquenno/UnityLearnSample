@@ -23,6 +23,7 @@ public class ScalerModule : MonoBehaviour
         toDefault = false;
     }
 
+    [ContextMenu("Активировать модуль")]
     public void ActivateModule()
     {
         Vector3 target = toDefault ? defaultScale : targetScale;
