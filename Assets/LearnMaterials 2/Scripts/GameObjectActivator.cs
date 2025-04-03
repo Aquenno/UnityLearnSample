@@ -19,6 +19,7 @@ public class GameObjectActivator : MonoBehaviour
         }
     }
 
+    [ContextMenu("Активировать модуль")]
     public void ActivateModule()
     {
         SetStateForAll();
