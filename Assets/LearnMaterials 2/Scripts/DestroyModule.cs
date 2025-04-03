@@ -19,6 +19,7 @@ public class DestroyModule : MonoBehaviour
         myTransform = transform;
     }
 
+    [ContextMenu("Активировать модуль")]
     public void ActivateModule()
     {
         StartCoroutine(DestroyRandomChildObjectCoroutine());
