@@ -1,45 +1,34 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-[RequireComponent(typeof(Renderer))]
-public class ObstacleItem : MonoBehaviour, IDamageable
+public class ObstacleItem : MonoBehaviour
 {
-    [Range(0, 1)]
-    [SerializeField] private float currentValue = 1f;
-    [SerializeField] private UnityEvent onDestroyObstacle;
+    [Range(0, 1)] public float currentValue = 1f;
+    public UnityEvent onDestroyObstacle; // Событие при разрушении
 
-    private Renderer obstacleRenderer;
-    private Color originalColor;
+    private Renderer _renderer;
+    private Color _originalColor;
 
-    private void Awake()
+    private void Start()
     {
-        obstacleRenderer = GetComponent<Renderer>();
-        originalColor = obstacleRenderer.material.color;
-        UpdateColor();
+        _renderer = GetComponent<Renderer>();
+        _originalColor = _renderer.material.color;
     }
 
-    public void GetDamage(float value)
+    private void Update()
     {
-        if (currentValue <= 0) return; // Уже уничтожен
+        // Плавное изменение цвета от белого (1) к красному (0)
+        _renderer.material.color = Color.Lerp(Color.red, _originalColor, currentValue);
+    }
 
-        currentValue = Mathf.Clamp(currentValue - value, 0, 1);
-        UpdateColor();
+    public void GetDamage(float damage)
+    {
+        currentValue -= damage;
 
         if (currentValue <= 0)
         {
-            onDestroyObstacle?.Invoke();
-            Destroy(gameObject);
+            onDestroyObstacle.Invoke(); // Запускаем событие
+            Destroy(gameObject); // Уничтожаем препятствие
         }
     }
-
-    private void UpdateColor()
-    {
-        // Плавный переход от белого (1) к красному (0)
-        obstacleRenderer.material.color = Color.Lerp(Color.red, originalColor, currentValue);
-    }
-}
-
-public interface IDamageable
-{
-    void GetDamage(float value);
 }

@@ -2,78 +2,60 @@ using UnityEngine;
 
 public class InteractiveRaycast : MonoBehaviour
 {
-    [SerializeField] private GameObject prefab;
-    [SerializeField] private LayerMask interactivePlaneLayer;
-    [SerializeField] private LayerMask interactiveBoxLayer;
-
-
-    private Camera mainCamera;
+    public GameObject prefab;
     private InteractiveBox selectedBox;
-
-    private void Awake()
-    {
-        mainCamera = Camera.main;
-    }
 
     private void Update()
     {
-        HandleMouseClicks();
-    }
-
-    private void HandleMouseClicks()
-    {
-        if (Input.GetMouseButtonDown(0)) // Левый клик
+        // Левый клик
+        if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
 
-            // Сначала проверяем клик по InteractiveBox
-            if (Physics.Raycast(ray, out RaycastHit boxHit, Mathf.Infinity, interactiveBoxLayer))
+            if (Physics.Raycast(ray, out hit))
             {
-                InteractiveBox clickedBox = boxHit.collider.GetComponent<InteractiveBox>();
+                // Клик по InteractiveBox
+                InteractiveBox box = hit.collider.GetComponent<InteractiveBox>();
+                if (box != null)
+                {
+                    if (selectedBox == null)
+                    {
+                        selectedBox = box;
+                    }
+                    else if (selectedBox != box)
+                    {
+                        selectedBox.AddNext(box);
+                        selectedBox = null;
+                    }
+                    return;
+                }
 
-                if (selectedBox == null)
+                // Клик по плоскости
+                if (hit.collider.CompareTag("InteractivePlane"))
                 {
-                    // Выбираем первый куб
-                    selectedBox = clickedBox;
-                    Debug.Log("First box selected");
+                    // Корректное размещение с учетом нормали и размера объекта
+                    Vector3 spawnPosition = hit.point + hit.normal * (prefab.transform.localScale.y / 2);
+                    Instantiate(prefab, spawnPosition, Quaternion.identity);
                 }
-                else if (selectedBox != clickedBox)
-                {
-                    // Связываем выбранный куб с новым
-                    selectedBox.AddNext(clickedBox);
-                    Debug.Log("Boxes connected");
-                    selectedBox = null;
-                }
-            }
-            // Если не попали по кубу, проверяем плоскость
-            else if (Physics.Raycast(ray, out RaycastHit planeHit, Mathf.Infinity, interactivePlaneLayer))
-            {
-                CreateNewBox(planeHit);
             }
         }
 
-        if (Input.GetMouseButtonDown(1)) // Правый клик
+        // Правый клик - удаление
+        if (Input.GetMouseButtonDown(1))
         {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
 
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, interactiveBoxLayer))
+            if (Physics.Raycast(ray, out hit))
             {
-                Destroy(hit.collider.gameObject);
-                selectedBox = null; // Сброс выбора если удалили выбранный
+                InteractiveBox box = hit.collider.GetComponent<InteractiveBox>();
+                if (box != null)
+                {
+                    Destroy(box.gameObject);
+                    if (selectedBox == box) selectedBox = null;
+                }
             }
         }
-    }
-
-    private void CreateNewBox(RaycastHit hit)
-    {
-        // Учитываем размер префаба
-        Bounds prefabBounds = prefab.GetComponent<Renderer>().bounds;
-        float offset = prefabBounds.extents.y;
-
-        // Создаем куб с учетом нормали поверхности
-        Vector3 spawnPosition = hit.point + hit.normal * offset;
-        Quaternion spawnRotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-
-        Instantiate(prefab, spawnPosition, spawnRotation);
     }
 }

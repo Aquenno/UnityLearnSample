@@ -1,51 +1,52 @@
+using System.Diagnostics;
 using UnityEngine;
 
-public class InteractiveBox : MonoBehaviour, IConnectable
+public class InteractiveBox : MonoBehaviour
 {
-    [SerializeField] private InteractiveBox next;
-    [SerializeField] private Color lineColor = Color.green;
+    [HideInInspector] public InteractiveBox next;
+    private LineRenderer lineRenderer;
+
+    private void Start()
+    {
+        // Инициализация LineRenderer
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.05f;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.material = new Material(Shader.Find("Standard")) { color = Color.blue };
+        lineRenderer.enabled = false;
+    }
 
     private void Update()
     {
         if (next != null)
         {
-            // Отрисовка луча в редакторе
-            Debug.DrawLine(transform.position, next.transform.position, lineColor);
+            // Отрисовка луча
+            lineRenderer.enabled = true;
+            lineRenderer.SetPosition(0, transform.position);
+            lineRenderer.SetPosition(1, next.transform.position);
 
-            // Проверка на препятствия
-            CheckForObstacles();
+
+            // Проверка попадания в препятствия
+            RaycastHit hit;
+            Vector3 direction = next.transform.position - transform.position;
+            if (Physics.Raycast(transform.position, direction, out hit, direction.magnitude))
+            {
+                ObstacleItem obstacle = hit.collider.GetComponent<ObstacleItem>();
+                if (obstacle != null)
+                {
+                    obstacle.GetDamage(Time.deltaTime);
+                }
+            }
+        }
+        else
+        {
+            lineRenderer.enabled = false;
         }
     }
 
     public void AddNext(InteractiveBox box)
     {
-        if (next != null && next != box)
-        {
-            Debug.LogWarning("This box already has a next connection!");
-            return;
-        }
-
+        if (box == this) return; // Нельзя назначить самого себя
         next = box;
     }
-
-    private void CheckForObstacles()
-    {
-        RaycastHit hit;
-        Vector3 direction = next.transform.position - transform.position;
-        float distance = Vector3.Distance(transform.position, next.transform.position);
-
-        if (Physics.Raycast(transform.position, direction, out hit, distance))
-        {
-            IDamageable damageable = hit.collider.GetComponent<IDamageable>();
-            if (damageable != null)
-            {
-                damageable.GetDamage(Time.deltaTime); // Урон распределенный по времени
-            }
-        }
-    }
-}
-
-public interface IConnectable
-{
-    void AddNext(InteractiveBox box);
 }
